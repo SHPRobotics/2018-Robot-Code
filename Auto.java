@@ -7,18 +7,23 @@ public class Auto {
 	Spark ld;
 	Spark rd;
 	Victor shoot;
+	Victor elevate;
 	String platformData;
 	char nearSideSwitch;
 	char scaleSide;
 	char farSideSwitch;
+	double turningTime = 5;
+	double fowardTime = 10;
+	double goalTime = 15;
 
 	Timer time = new Timer();
 	
-	Auto(Spark leftDrive, Spark rightDrive, Victor shooter){
+	Auto(Spark leftDrive, Spark rightDrive, Victor shooter, Victor elevator){
 		
 		ld = leftDrive;
 		rd = rightDrive;
 		shoot = shooter;
+		elevate = elevator;
 		
 	}
 	
@@ -38,13 +43,9 @@ public class Auto {
 		
 	}
 	
-	public void autoScale() {
+	/*public void autoScaleShooter() {
 		
-		double turningTime = 5;
-		double fowardTime = 10;
-		double shootTime = 15;
-		
-		if (nearSideSwitch == 'L') {
+		if (scaleSide == 'L') {
 			
 			if (time.get() <= turningTime) {
 				
@@ -60,7 +61,7 @@ public class Auto {
 				
 			}
 			
-			else if (time.get() <= shootTime && time.get() > fowardTime && time.get() > turningTime) {
+			else if (time.get() <= goalTime && time.get() > fowardTime) {
 				
 				shoot.setSpeed(1);
 				//Push the cube into the shooter
@@ -92,7 +93,7 @@ public class Auto {
 				
 			}
 			
-			else if (time.get() <= shootTime && time.get() > fowardTime && time.get() > turningTime) {
+			else if (time.get() <= goalTime && time.get() > fowardTime) {
 				
 				shoot.setSpeed(1);
 				//Push the cube into the shooter
@@ -108,7 +109,78 @@ public class Auto {
 			
 		}
 		
+	}*/
+	
+	public void autoScaleElevator() {
+		
+		if (scaleSide == 'L') {
+			
+			if (time.get() <= turningTime) {
+				
+				ld.setSpeed(.5);
+				
+			}
+			
+			else if (time.get() > turningTime && time.get() <= fowardTime) {
+				
+				ld.setSpeed(.5);
+				rd.setSpeed(-.5);
+				elevate.setSpeed(.5);
+				
+			}
+			
+			else if (time.get() > fowardTime && time.get() <= goalTime) {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				elevate.setSpeed(.5);
+				
+			}
+			
+			else {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				elevate.setSpeed(0);
+				
+			}
+			
+		}
+		
+		else {
+			
+			if (time.get() <= turningTime) {
+				
+				rd.setSpeed(.5);
+				
+			}
+			
+			else if (time.get() > turningTime && time.get() <= fowardTime) {
+				
+				ld.setSpeed(.5);
+				rd.setSpeed(-.5);
+				elevate.setSpeed(.5);
+				
+			}
+			
+			else if (time.get() > fowardTime && time.get() <= goalTime) {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				elevate.setSpeed(.5);
+				
+			}
+			
+			else {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				elevate.setSpeed(0);
+				
+			}
+			
+		}
+		
 	}
 	
 }
-
