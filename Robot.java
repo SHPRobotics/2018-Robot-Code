@@ -47,7 +47,7 @@ public class Robot extends IterativeRobot {
 	
 	//Team made class objects
 	Drive drive = new Drive(leftJoy, rightJoy, leftDrive, rightDrive);
-	Auto auto = new Auto(leftDrive, rightDrive, shooter);
+	Auto auto = new Auto(leftDrive, rightDrive, shooter, elevator);
 	Shooter shoot = new Shooter(leftJoy, rightJoy, xboxController, shooter, pdp);
 	Intake intake = new Intake(intaker, xboxController);
 	Elevator elevate = new Elevator(digitalInputValue, xboxController, elevator);
