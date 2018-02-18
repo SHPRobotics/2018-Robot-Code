@@ -6,8 +6,8 @@ public class Auto {
 	
 	Spark ld;
 	Spark rd;
-	Victor shoot;
 	Victor elevate;
+	Victor intake;
 	String platformData;
 	char nearSideSwitch;
 	char scaleSide;
@@ -18,12 +18,12 @@ public class Auto {
 
 	Timer time = new Timer();
 	
-	Auto(Spark leftDrive, Spark rightDrive, Victor shooter, Victor elevator){
+	Auto(Spark leftDrive, Spark rightDrive, Victor elevator, Victor intaker){
 		
 		ld = leftDrive;
 		rd = rightDrive;
-		shoot = shooter;
 		elevate = elevator;
+		intake = intaker;
 		
 	}
 	
@@ -42,74 +42,6 @@ public class Auto {
 		farSideSwitch = platformData.charAt(2);
 		
 	}
-	
-	/*public void autoScaleShooter() {
-		
-		if (scaleSide == 'L') {
-			
-			if (time.get() <= turningTime) {
-				
-				ld.setSpeed(.5);
-				
-			}
-			
-			else if (time.get() <= fowardTime && time.get() > turningTime) {
-				
-				ld.setSpeed(.5);
-				rd.setSpeed(-.5);
-				shoot.setSpeed(1);
-				
-			}
-			
-			else if (time.get() <= goalTime && time.get() > fowardTime) {
-				
-				shoot.setSpeed(1);
-				//Push the cube into the shooter
-				
-			}
-			
-			else {
-				
-				ld.setSpeed(0);
-				rd.setSpeed(0);
-				
-			}
-			
-		}
-		
-		else {
-			
-			if (time.get() <= turningTime) {
-				
-				rd.setSpeed(-.5);
-				
-			}
-			
-			else if (time.get() <= fowardTime && time.get() > turningTime) {
-				
-				ld.setSpeed(.5);
-				rd.setSpeed(-.5);
-				shoot.setSpeed(1);
-				
-			}
-			
-			else if (time.get() <= goalTime && time.get() > fowardTime) {
-				
-				shoot.setSpeed(1);
-				//Push the cube into the shooter
-				
-			}
-			
-			else {
-				
-				ld.setSpeed(0);
-				rd.setSpeed(0);
-				
-			}
-			
-		}
-		
-	}*/
 	
 	public void autoScaleElevator() {
 		
@@ -179,6 +111,46 @@ public class Auto {
 				
 			}
 			
+		}
+		
+	}
+	
+	public void startingLeftSide() {
+		
+		if (nearSideSwitch == 'L') {
+			
+			if (time.get() <= 1) {
+				
+				ld.setSpeed(-.25);
+				rd.setSpeed(.25);
+				elevate.setSpeed(1);
+				
+			}
+			
+			else if(time.get() <= 1.5) {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				intake.setSpeed(-.5);
+				
+			}
+			
+			else {
+				
+				ld.setSpeed(0);
+				rd.setSpeed(0);
+				intake.setSpeed(0);
+				
+			}
+			
+		}
+
+		else {
+			
+			/*if () {
+			
+				
+			*/	
 		}
 		
 	}
