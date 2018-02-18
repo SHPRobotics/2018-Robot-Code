@@ -1,10 +1,8 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
+/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        *//* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
 package org.usfirst.frc.team5992.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -28,35 +26,42 @@ public class Robot extends IterativeRobot {
 	
 	
 	// Joystick Object
-	Joystick rightJoy = new Joystick(0);
-	Joystick leftJoy = new Joystick(1);
+	Joystick leftJoy = new Joystick(0);
+	Joystick rightJoy = new Joystick(1);
 	XboxController xboxController = new XboxController(2);
 	
-	////Motor controller objects
+	//Drive motors
 	Spark leftDrive = new Spark(0);
 	Spark rightDrive = new Spark(1);
-	Victor shooter = new Victor(2);
-	Victor intaker = new Victor(3);
-	Victor elevator = new Victor(4);
+	
+	//end effector
+	Victor intaker = new Victor(2);
+	Victor elevator = new Victor(3);
+	DoubleSolenoid intakePis = new DoubleSolenoid(0,0,1);
+	DoubleSolenoid climber = new DoubleSolenoid(0,2,3);
+	DoubleSolenoid inOpen = new DoubleSolenoid(0,4,5);
+	
 	
 	//PDP
 	PowerDistributionPanel pdp = new PowerDistributionPanel(1);
 	
 	//Limit Switch
-	DigitalInput digitalInputValue = new DigitalInput(0);
+	DigitalInput limitUp = new DigitalInput(0);
+	DigitalInput limitDown = new DigitalInput(1);
 	
 	//Team made class objects
 	Drive drive = new Drive(leftJoy, rightJoy, leftDrive, rightDrive);
-	Auto auto = new Auto(leftDrive, rightDrive, shooter, elevator);
-	Shooter shoot = new Shooter(leftJoy, rightJoy, xboxController, shooter, pdp);
-	Intake intake = new Intake(intaker, xboxController);
-	Elevator elevate = new Elevator(digitalInputValue, xboxController, elevator);
+	Auto auto = new Auto(leftDrive, rightDrive, elevator, intaker);
+	Intake intake = new Intake(intaker, xboxController, intakePis);
+	Elevator elevate = new Elevator(limitUp, limitDown, xboxController, elevator);
+	Climber climb = new Climber(climber, xboxController);
 	
 	@Override
 	public void robotInit() {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("My Auto", kCustomAuto);
 		SmartDashboard.putData("Auto choices", m_chooser);
+		intakePis.set(DoubleSolenoid.Value.kForward);
 	}
 
 	/**
@@ -101,19 +106,14 @@ public class Robot extends IterativeRobot {
 	
 	@Override
 	public void teleopPeriodic() {
-		/*int howMuchICanTake = 10000;
-		int howMuchIHaveTaken = 0;*/
-		drive.linearDrive();
-		//shoot.testMotor();
+
+		drive.exponentialDrive();
 		//elevate.moveElevator();
-		//System.out.println(leftJoy.getY());
-		
-	/*	if (howMuchIHaveTaken <= howMuchICanTake) {
-			howMuchIHaveTaken = howMuchIHaveTaken +1;
-		}
-		else {
-			//PleaseHelp.depression();
-		}*/
+		elevate.limOverride();
+		climb.climbBar();
+		intake.takeCube();
+		System.out.println("up " + limitUp.get());
+		System.out.println("down " + limitDown.get());
 		
 	}
 
@@ -122,4 +122,3 @@ public class Robot extends IterativeRobot {
 	public void testPeriodic() {
 	}
 }
-
