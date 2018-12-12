@@ -5,10 +5,8 @@
 /*----------------------------------------------------------------------------*/
 package org.usfirst.frc.team5992.robot;
 
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.*;
 
 /**
@@ -37,10 +35,16 @@ public class Robot extends IterativeRobot {
 	//end effector
 	Victor intaker = new Victor(2);
 	Victor elevator = new Victor(3);
-	DoubleSolenoid intakePis = new DoubleSolenoid(0,0,1);
-	DoubleSolenoid climber = new DoubleSolenoid(0,2,3);
-	DoubleSolenoid inOpen = new DoubleSolenoid(0,4,5);
+	Victor climber = new Victor(4);
+	DoubleSolenoid intakePis = new DoubleSolenoid(0,4,5);
+	Solenoid inpis1 = new Solenoid(0,0);
+	Solenoid inpis2 = new Solenoid(0,1);
+	DoubleSolenoid intakeOpen = new DoubleSolenoid(0,2,3);
+	DoubleSolenoid climberPiston = new DoubleSolenoid(0,6,7);
 	
+	//Auton Choosers
+	DigitalInput chooseOne = new DigitalInput(2);
+	DigitalInput chooseTwo = new DigitalInput(3);
 	
 	//PDP
 	PowerDistributionPanel pdp = new PowerDistributionPanel(1);
@@ -50,18 +54,23 @@ public class Robot extends IterativeRobot {
 	DigitalInput limitDown = new DigitalInput(1);
 	
 	//Team made class objects
-	Drive drive = new Drive(leftJoy, rightJoy, leftDrive, rightDrive);
-	Auto auto = new Auto(leftDrive, rightDrive, elevator, intaker);
-	Intake intake = new Intake(intaker, xboxController, intakePis);
+	Drive drive = new Drive(xboxController, leftJoy, rightJoy, leftDrive, rightDrive);
+	Auto auto = new Auto(leftDrive, rightDrive, elevator, intaker, limitUp, chooseOne, chooseTwo, pdp);
+	Intake intake = new Intake(intaker, xboxController, intakePis, intakeOpen, inpis1, inpis2);
 	Elevator elevate = new Elevator(limitUp, limitDown, xboxController, elevator);
-	Climber climb = new Climber(climber, xboxController);
+	Climber climb = new Climber(climber, xboxController, climberPiston);
 	
 	@Override
 	public void robotInit() {
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
 		m_chooser.addObject("My Auto", kCustomAuto);
 		SmartDashboard.putData("Auto choices", m_chooser);
-		intakePis.set(DoubleSolenoid.Value.kForward);
+		intakeOpen.set(DoubleSolenoid.Value.kForward);
+		CameraServer.getInstance().startAutomaticCapture().setResolution(640, 480);
+		auto.setTimer();
+		inpis1.set(true);
+		inpis2.set(true);
+		
 	}
 
 	/**
@@ -82,17 +91,24 @@ public class Robot extends IterativeRobot {
 		m_autoSelected = m_chooser.getSelected();
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
+		
+		
 		System.out.println("Auto selected: " + m_autoSelected);
 		
 		auto.setTimer();
 		auto.setPlatformData();
+		
+		intakeOpen.set(DoubleSolenoid.Value.kReverse);
+		climberPiston.set(DoubleSolenoid.Value.kReverse);
+		
+		intaker.setSpeed(0);
 		
 	}
 
 	
 	@Override
 	public void autonomousPeriodic() {
-		switch (m_autoSelected) {
+		/*switch (m_autoSelected) {
 			case kCustomAuto:
 				// Put custom auto code here
 				break;
@@ -100,25 +116,56 @@ public class Robot extends IterativeRobot {
 			default:
 				// Put default auto code here
 				break;
-		}
+		}*/
+		intakeOpen.set(DoubleSolenoid.Value.kForward);
+		//auto.newStartingRightSide(inpis1, inpis2);
+		//auto.startingMiddle(inpis1, inpis2);
+		//auto.newStartingLeftSide(inpis1, inpis2);
+		//auto.rSR(inpis1, inpis2);
+		//auto.sLSCO();
+		//auto.driveF();
+		//auto.startRightScale(inpis1, inpis2);
+		//auto.quickTest2();
+		//auto.leftScale(inpis1, inpis2);
+		//auto.rightScale(inpis1, inpis2);
+		auto.leftScalePrio(inpis1, inpis2);
+		//auto.leftSwitchPrio(inpis1,inpis2);
+		
 	}
 
 	
 	@Override
 	public void teleopPeriodic() {
 
-		drive.exponentialDrive();
-		//elevate.moveElevator();
-		elevate.limOverride();
+		drive.chooseDrive();
+		elevate.moveElevator();
 		climb.climbBar();
-		intake.takeCube();
+		intake.betterTakeCube();	
+		
 		System.out.println("up " + limitUp.get());
 		System.out.println("down " + limitDown.get());
+		
+		if(xboxController.getStartButton()) {
+			
+			intakeOpen.set(DoubleSolenoid.Value.kReverse);
+			
+			
+		}
+		else {
+			
+			intakeOpen.set(DoubleSolenoid.Value.kForward);
+			
+		}
+		
+		//elevator.setSpeed(xboxController.getY(GenericHID.Hand.kLeft));
 		
 	}
 
 	
 	@Override
 	public void testPeriodic() {
+		inpis1.set(false);
+		inpis2.set(true);
+		
 	}
 }

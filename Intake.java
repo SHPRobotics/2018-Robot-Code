@@ -7,23 +7,29 @@ public class Intake {
 	DigitalInput limIn;
 	XboxController xbox;
 	DoubleSolenoid inpis;
+	DoubleSolenoid inop;
+	Solenoid ip;
+	Solenoid ip2;
 	
-	Intake (Victor intaker, XboxController xboxController, DoubleSolenoid intakePis) {
+	Intake (Victor intaker, XboxController xboxController, DoubleSolenoid intakePis, DoubleSolenoid intakeOpen, Solenoid inpis1, Solenoid inpis2) {
 		
 		in = intaker;
 		xbox = xboxController;
 		inpis = intakePis;
+		inop = intakeOpen;
+		ip = inpis1;
+		ip2 = inpis2;
 		
 	}
 	
 	public void takeCube () {
 		
-		if (xbox.getXButton()) {
+		if (xbox.getYButton()) {
 			
 			in.setSpeed(.5);
 			
 		}
-		else if(xbox.getYButton()) {
+		else if(xbox.getXButton()) {
 			in.setSpeed(-.5);
 		}
 		else {
@@ -32,7 +38,7 @@ public class Intake {
 			
 		}
 		
-		if(xbox.getBumper(GenericHID.Hand.kRight)) {
+		if(xbox.getBumper(GenericHID.Hand.kLeft)) {
 			
 			inpis.set(DoubleSolenoid.Value.kReverse);
 			
@@ -42,7 +48,7 @@ public class Intake {
 			inpis.set(DoubleSolenoid.Value.kForward);
 			
 		}
-		
+				
 	}
 	
 	public void seeCube() {
@@ -67,40 +73,49 @@ public class Intake {
 	
 	public void betterTakeCube() {
 		
-		if(limIn.get()) {
 			
-			if(xbox.getXButton()) {
+		if(xbox.getTriggerAxis(GenericHID.Hand.kRight) == 0) {
 				
-				in.setSpeed(.5);
-				inpis.set(DoubleSolenoid.Value.kReverse);
-				
-			}
+			in.setSpeed(-xbox.getTriggerAxis(GenericHID.Hand.kLeft)*.8);
 			
-			else {
-				
-				inpis.set(DoubleSolenoid.Value.kReverse);
-				in.setSpeed(0);
-				
 			}
+		
+		else if(xbox.getBButton()) {
+			
+			in.setSpeed(.95);
 			
 		}
 		
 		else {
 			
-			if(xbox.getXButton()) {
-				
-				inpis.set(DoubleSolenoid.Value.kForward);
-				in.setSpeed(-.25);
-				
-			}
+			in.setSpeed(xbox.getTriggerAxis(GenericHID.Hand.kRight)*.95);
 			
+		}
+		
+		if(xbox.getBumper(GenericHID.Hand.kRight)) {
 			
-			else {
-				
-				inpis.set(DoubleSolenoid.Value.kForward);
-				in.setSpeed(0);
-				
-			}	
-		}	
+			ip.set(true);
+			ip2.set(true);
+			
+		}
+		
+		else {
+			
+			ip.set(false);
+			ip2.set(false);
+			
+		}
+		
+		if(xbox.getStartButton()) {
+			
+			inop.set(DoubleSolenoid.Value.kReverse);
+			
+		}
+		
+		else {
+			
+			inop.set(DoubleSolenoid.Value.kForward);
+			
+		}
 	}	
 }

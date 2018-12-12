@@ -48,11 +48,11 @@ public class Elevator {
 	
 	public void moveElevator() {
 		
-		if (limDown.get()) { //Bottom limit switch pressed down
+		if (!limDown.get()) { //Bottom limit switch pressed down
 			
 			if (xbox.getY(GenericHID.Hand.kLeft) < 0) { //Checks if Left Stick is pressed up
 				
-				elevate.setSpeed(-(xbox.getY(GenericHID.Hand.kLeft))); //Moves up
+				elevate.setSpeed((xbox.getY(GenericHID.Hand.kLeft))); //Moves up
 				
 			}
 			
@@ -66,29 +66,29 @@ public class Elevator {
 		
 		else if(limUp.get()) { //Top limit pressed down
 			
-			if(xbox.getY(GenericHID.Hand.kLeft) > 0) { //
+			if(xbox.getY(GenericHID.Hand.kLeft) > 0) { //Checks if Right Stick is pressed down
 				
-				elevate.setSpeed(-(xbox.getY(GenericHID.Hand.kLeft)));
+				elevate.setSpeed((xbox.getY(GenericHID.Hand.kLeft))); //Moves down
 				
 			}
 			
 			else {
 				
-				elevate.setSpeed(0);
+				elevate.setSpeed(0); //No motion
 				
 			}
 			
 		}
 		else {
 			
-			elevate.setSpeed(.5*(xbox.getY(GenericHID.Hand.kLeft)));
+			elevate.setSpeed((xbox.getY(GenericHID.Hand.kLeft)));
 			
 		}
 	}
 	
 	public void simpleElevator() {
 		
-		elevate.setSpeed(xbox.getY(GenericHID.Hand.kRight));
+		elevate.setSpeed(-xbox.getY(GenericHID.Hand.kLeft));
 		
 	}
 	
