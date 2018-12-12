@@ -1,106 +1,49 @@
 package org.usfirst.frc.team5992.robot;
-import edu.wpi.first.wpilibj.*; 
+import edu.wpi.first.wpilibj.*;
 
 public class Intake {
-
-	Victor in;
-	DigitalInput limIn;
-	XboxController xbox;
-	DoubleSolenoid inpis;
 	
-	Intake (Victor intaker, XboxController xboxController, DoubleSolenoid intakePis) {
+	Joystick rj = null;
+	Joystick ej = null;
+	
+	Victor invic = null;
+	
+	public Intake(Joystick rightJoy, Joystick endJoy, Victor intake){
 		
-		in = intaker;
-		xbox = xboxController;
-		inpis = intakePis;
+		rj = rightJoy;
+		ej = endJoy;
+		invic = intake;
 		
 	}
 	
-	public void takeCube () {
+	public void collect(){
 		
-		if (xbox.getXButton()) {
+		if (ej.getIsXbox() == true){
 			
-			in.setSpeed(.5);
-			
-		}
-		else if(xbox.getYButton()) {
-			in.setSpeed(-.5);
-		}
-		else {
-			
-			in.setSpeed(0);
-			
-		}
-		
-		if(xbox.getBumper(GenericHID.Hand.kRight)) {
-			
-			inpis.set(DoubleSolenoid.Value.kReverse);
-			
-		}
-		else {
-			
-			inpis.set(DoubleSolenoid.Value.kForward);
+			if (ej.getRawAxis(3) >= .5){
+				
+				invic.setSpeed(-1);
+				
+			}else{
+				
+				invic.set(0);
+			}
 			
 		}
 		
 	}
 	
-	public void seeCube() {
+	public void collectTest(){
 		
-		if (!limIn.get()) {
+		if (rj.getRawButton(2) == true){
 			
-			if (xbox.getYButton()) {
-				
-				in.setSpeed(-.5);
-				
-				
-			}
+			invic.setSpeed(-1);
 			
-		}
-		else {
+		}else{
 			
-			takeCube();
-			
+			invic.setSpeed(0);
 		}
 		
 	}
 	
-	public void betterTakeCube() {
-		
-		if(limIn.get()) {
-			
-			if(xbox.getXButton()) {
-				
-				in.setSpeed(.5);
-				inpis.set(DoubleSolenoid.Value.kReverse);
-				
-			}
-			
-			else {
-				
-				inpis.set(DoubleSolenoid.Value.kReverse);
-				in.setSpeed(0);
-				
-			}
-			
-		}
-		
-		else {
-			
-			if(xbox.getXButton()) {
-				
-				inpis.set(DoubleSolenoid.Value.kForward);
-				in.setSpeed(-.25);
-				
-			}
-			
-			
-			else {
-				
-				inpis.set(DoubleSolenoid.Value.kForward);
-				in.setSpeed(0);
-				
-			}	
-		}	
-	}	
 }

@@ -1,124 +1,275 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        *//* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
 package org.usfirst.frc.team5992.robot;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Spark;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Victor;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the IterativeRobot
  * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the build.properties file in the
- * project.
+ * creating this project, you must also update the manifest file in the resource
+ * directory.
  */
-public class Robot extends IterativeRobot {
-	private static final String kDefaultAuto = "Default";
-	private static final String kCustomAuto = "My Auto";
-	private String m_autoSelected;
-	private SendableChooser<String> m_chooser = new SendableChooser<>();
+public class Robot extends IterativeRobot // implements VisionRunner.Listener<Team5992VisionPipeline>{
+{	
+	//Command autonomousCommand;
+	//SendableChooser<Object> autoChooser;
 	
+	//Sensor Base
+	//AnalogInput ultraranger1 = new AnalogInput(0);//WARNING:the analog input will only accept from 0-5V, scale the 0-10V down to prevent overloading
+	//I2C i2cBusDevice = new I2C(I2C.Port.kOnboard, 0);//this should give us access to the compass through the I2C bus
+	//ADXRS450_Gyro gyro1 = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);//constructs the gyro
+	//double tmpAngle = 0;
 	
-	// Joystick Object
+	//joysticks
+	
 	Joystick leftJoy = new Joystick(0);
 	Joystick rightJoy = new Joystick(1);
-	XboxController xboxController = new XboxController(2);
+	Joystick endJoy = new Joystick(2);
 	
-	//Drive motors
-	Spark leftDrive = new Spark(0);
-	Spark rightDrive = new Spark(1);
+	//motor control
+	Victor leftDrive = new Victor(0);
+	Victor rightDrive = new Victor(1);
+	Victor shooter = new Victor(2);
+	Spark intake = new Spark(4);//these values
+	Spark climber = new Spark(3);//have been changed
+	//Spark agitamater = new Spark(6);//changed
 	
-	//end effector
-	Victor intaker = new Victor(2);
-	Victor elevator = new Victor(3);
-	DoubleSolenoid intakePis = new DoubleSolenoid(0,0,1);
-	DoubleSolenoid climber = new DoubleSolenoid(0,2,3);
-	DoubleSolenoid inOpen = new DoubleSolenoid(0,4,5);
+	//pneumatics control
+	Compressor compy = new Compressor();
+	DoubleSolenoid soleGear = new DoubleSolenoid(0, 0, 1);
+	DoubleSolenoid soleTank = new DoubleSolenoid(0, 2, 3);
+	
+	//extra
+	Timer t = new Timer();
+	final double kAutonDriveTime = 10;
+	int station;
+		
+	PowerDistributionPanel pdp = new PowerDistributionPanel();	
+	double autoSpeed = .6;
+	double autoSpeed1 = -.6;
 	
 	
-	//PDP
-	PowerDistributionPanel pdp = new PowerDistributionPanel(1);
+	//subsystems/objects
+	SimpleDrive drive = new SimpleDrive(rightJoy, leftJoy, rightDrive, leftDrive, endJoy);
+	Shooter shootShoot = new Shooter(endJoy, leftJoy, rightJoy, shooter, pdp, soleTank);
+	//Intake pullItIn = new Intake(rightJoy, endJoy, intake);
+	Scale pullUps = new Scale(leftJoy, endJoy, climber);
+	//VisionHandler handle = new VisionHandler(drive);
 	
-	//Limit Switch
-	DigitalInput limitUp = new DigitalInput(0);
-	DigitalInput limitDown = new DigitalInput(1);
+	//Auton autonObj = new Auton(leftDrive, rightDrive, soleGear, t, null, drive, shooter, shootShoot);
+	//Auton autonObj = new Auton(leftDrive, rightDrive, soleGear, t, ultraranger1, gyro1, drive);
+	final boolean kAutonSelect = true; //SELECTS THE AUTONOMOUS MODE, IF CHANGED BETWEEN ROUNDS, UPDATE THE CODE
+								 //TRUE = COMPLEX AUTON WITH BALLS --------------RED
+								 //FLASE = SIMPLE AUTON WITH DRIVE FORWARD
 	
-	//Team made class objects
-	Drive drive = new Drive(leftJoy, rightJoy, leftDrive, rightDrive);
-	Auto auto = new Auto(leftDrive, rightDrive, elevator, intaker);
-	Intake intake = new Intake(intaker, xboxController, intakePis);
-	Elevator elevate = new Elevator(limitUp, limitDown, xboxController, elevator);
-	Climber climb = new Climber(climber, xboxController);
 	
 	@Override
 	public void robotInit() {
-		m_chooser.addDefault("Default Auto", kDefaultAuto);
-		m_chooser.addObject("My Auto", kCustomAuto);
-		SmartDashboard.putData("Auto choices", m_chooser);
-		intakePis.set(DoubleSolenoid.Value.kForward);
+		//SimpleDrive drive = new SimpleDrive(rightJoy, leftJoy);		
+		//handle.cameraInit();
+		
+		//CameraServer.getInstance().startAutomaticCapture();
+		soleTank.set(DoubleSolenoid.Value.kForward);//start piston blocking balls
+		shooter.setSpeed(0);
+		intake.set(0);
+		climber.set(0);
+		//agitamater.set(0);
+		compy.start();
+		soleGear.set(DoubleSolenoid.Value.kReverse);
+		//gyro1.reset();
+		station = DriverStation.getInstance().getLocation();
+		
+		
+	}
+
+	
+	@Override
+	public void autonomousInit() {
+		//handle.autoLinDrive
+		t.start();
+		//gyro1.reset();
+		soleTank.set(DoubleSolenoid.Value.kForward);
+		soleGear.set(DoubleSolenoid.Value.kReverse);
+		
 	}
 
 	/**
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * getString line to get the auto name from the text box below the Gyro
-	 *
-	 * <p>You can add additional auto modes by adding additional comparisons to
-	 * the switch structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
+	 * This function is called periodically during autonomous
 	 */
 	@Override
-	
-	
-	public void autonomousInit() {
-		m_autoSelected = m_chooser.getSelected();
-		// autoSelected = SmartDashboard.getString("Auto Selector",
-		// defaultAuto);
-		System.out.println("Auto selected: " + m_autoSelected);
-		
-		auto.setTimer();
-		auto.setPlatformData();
-		
-	}
-
-	
-	@Override
 	public void autonomousPeriodic() {
-		switch (m_autoSelected) {
-			case kCustomAuto:
-				// Put custom auto code here
-				break;
-			case kDefaultAuto:
-			default:
-				// Put default auto code here
-				break;
+		if(kAutonSelect){
+			if(t.get() < 5){
+				
+				leftDrive.setSpeed(-.4);
+				rightDrive.setSpeed(.45);
+				
+				
+			}
+			else{
+				leftDrive.stopMotor();
+				rightDrive.stopMotor();
+			}
+			/*if (t.get() < .5){
+				leftDrive.setSpeed(-.6);
+				rightDrive.setSpeed(drive.ASR(0, autoSpeed));
+				autoSpeed = drive.ASR(0, autoSpeed);
+				
+				leftDrive.setSpeed(0);
+				rightDrive.setSpeed(0);
+				//shooter.setSpeed(-1);
+				shootShoot.shootVolt(true);
+				//agitamater.set(-.5);
+			}	
+			else if(t.get()<1.5){
+				shootShoot.shootVolt(true);
+				soleGear.set(DoubleSolenoid.Value.kReverse);
+				
+			}
+			else if (t.get() < 4){
+				
+				drive.autoAngularDrive(120);
+				tmpAngle = gyro1.getAngle();
+				System.out.println("Angle: " + tmpAngle);
+			}else if(t.get()<5){
+		
+				leftDrive.setSpeed(-.6);
+				rightDrive.setSpeed(drive.ASR(tmpAngle, autoSpeed));
+				autoSpeed = drive.ASR(tmpAngle, autoSpeed);
+			
+			}
+			//else if(t.get()<13){
+			else{
+				leftDrive.setSpeed(-.6);
+				rightDrive.setSpeed(drive.ASR(tmpAngle, autoSpeed));
+				autoSpeed = drive.ASR(tmpAngle, autoSpeed);
+			
+				
+			
+			}
+			else{
+				leftDrive.setSpeed(.6);
+				rightDrive.setSpeed(drive.ASR(tmpAngle, autoSpeed));
+			}
+			*/
 		}
-	}
+		else{
+			if (t.get() < 1){
+				
+				shootShoot.shootVolt(true);
+				
+			}
+			else if(t.get() < 10){
+				
+				shootShoot.shootVolt(true);
+				soleTank.set(DoubleSolenoid.Value.kReverse);//Open piston, let balls through
+				
+			}
+			/*
+			else if(t.get() < 8){
+				leftDrive.setSpeed(-.2);
+			}
+			
+			else if(t.get() < 10){
+				tmpAngle = gyro1.getAngle();
+				drive.autoAngularDrive();
+			}*/
+			else if(t.get() >= 10){
+				
+				shooter.setSpeed(0);
+				leftDrive.setSpeed(-.65);
+				rightDrive.setSpeed(.4);
+				//rightDrive.setSpeed(drive.ASR(0, autoSpeed1));
+				//autoSpeed1 = drive.ASR(0, autoSpeed1);
+				
+			}
+		}
+		
+		}
+		
+		
+	
+	
 
+	/**
+	 * This function is called periodically during operator control
+	 */
+	public void teleopInit(){
+		//autonObj.free();
+		//gyro1.reset();
+		leftDrive.stopMotor();
+		rightDrive.stopMotor();
+		soleGear.set(DoubleSolenoid.Value.kReverse);
+		}
 	
 	@Override
 	public void teleopPeriodic() {
-
-		drive.exponentialDrive();
-		//elevate.moveElevator();
-		elevate.limOverride();
-		climb.climbBar();
-		intake.takeCube();
-		System.out.println("up " + limitUp.get());
-		System.out.println("down " + limitDown.get());
 		
-	}
+		
+		//shootShoot.shootTest();
+		
+		if(endJoy.getIsXbox() == true){
+			
+			drive.linDrive();
+			//DriverStationLCD.getInstance().println(DriverStationLCD.Line, 1, gyro1.getAngle());
+			//DriverStationLCD.getInstance().updateLCD();
+			/*if (gyro1.getAngle()>45){
+				soleTank.set(DoubleSolenoid.Value.kReverse);
+			}*/
+			shootShoot.stopper();
+			//shootShoot.shoot();
+			shootShoot.shootVolt(false);
+			//pullItIn.collect();
+			//pullUps.climb();
+			if (endJoy.getRawAxis(1) >= .25 || endJoy.getRawAxis(1) <= -.25){
+				
+				intake.set(endJoy.getRawAxis(1));
+				climber.set(-endJoy.getRawAxis(1));
+				
+			}
+			else {
+				
+				intake.set(0);
+				climber.set(0);
+				
+			}
+			if (endJoy.getRawButton(2) == true){
+				soleGear.set(DoubleSolenoid.Value.kForward);//Open
 
-	
+			}
+			else{
+				
+				soleGear.set(DoubleSolenoid.Value.kReverse);//Closed
+		
+			}
+			
+			/*if(rightJoy.getRawButton(11) == true){
+				handle.autoAdj();
+			}*/
+			//agitamater.set(1.0);
+		
+		
+		
+		}
+	}
+		
+	/**
+	 * This function is called periodically during test mode
+	 */
 	@Override
 	public void testPeriodic() {
 	}
 }
+
